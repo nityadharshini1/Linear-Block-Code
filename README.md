@@ -164,8 +164,11 @@ print("\nThe correct codeword is : "
 
 # Output Waveform
 
+
+<img width="472" height="807" alt="595166832-2754d9f2-51f0-4447-a6ec-1c9027906036" src="https://github.com/user-attachments/assets/6d797008-e78c-44ae-af0d-b1fd5191554c" />
+
 # Results
 ```
 Thus linear block code operation for the given input is successfully verified.
 ```
-# Hardware experiment output waveform.
+
