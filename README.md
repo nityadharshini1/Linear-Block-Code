@@ -3,165 +3,100 @@
 Write a simple python program to Generate Matrix, Codeword, Hamming weight, Syndrome matrix and find the error on received codeword using Linear block code. 
 # Tools required
 # Program
+import itertools
 import numpy as np
 
-pb = []          # Parity matrix
-Ik = []          # Identity matrix
-p = []
-m = []
-h = []
-h_dis = []
-r_code = []
-err = []
+p=int(input("Enter the Parity bits : "))
+m=int(input("Enter the Message bits : "))
 
-col = int(input("Enter the Parity bits : "))
-row = int(input("Enter the Message bits : "))
+rows=[]
+for i in range(m):
+    r=list(map(int,input(f"Enter the row values : {i+1} (Separated by space) : ").split()))
+    rows.append(r)
 
-for i in range(row):
+n=m+p
 
-    p = list(map(int,
-    input(f"Enter the row values : {i+1} (Separated by space) : ").split()))
+# Generator Matrix
+G=[]
+for i in range(m):
+    row=rows[i]+[0]*m
+    row[p+i]=1
+    G.append(row)
 
-    pb.append(p)
+print("\nGenerator Matrix G\n")
+for i in G:
+    print(*i)
 
-p_mat = np.array(pb, dtype=int)
+G=np.array(G)
 
-Ik = np.eye(row, dtype=int)
+print("\nMessage Bits  Codeword  Hamming Weight")
 
-g_mat = np.hstack((p_mat, Ik))
+codewords=[]
 
+for msg in itertools.product([0,1],repeat=m):
 
-n, k = g_mat.T.shape
+    msg=np.array(msg)
+    c=np.mod(np.dot(msg,G),2)
 
+    codewords.append(c)
 
-m = np.array([
-    [1 if (i >> (k-j-1)) & 1 else 0 for j in range(k)]
-    for i in range(2**k)
-])
+    print(*msg," ",*c," ",sum(c))
 
+# Minimum Hamming Distance
+non_zero_weights=[w for w in weights if w!=0]
+dmin=min(non_zero_weights)
 
-c = np.mod(np.dot(m, g_mat), 2)
+print("\nMinimum Hamming Distance =",dmin)
 
-for i, row1 in enumerate(c):
+# Parity Check Matrix
+P=G[:,0:p]
+H=np.concatenate((np.identity(p,dtype=int),P.T),axis=1)
 
-    h_dis1 = np.sum(row1)
+print("\nParity Check Matrix H\n")
 
-    h_dis.append(h_dis1)
+for i in H:
+    print(*i)
 
-h_mat = np.array(h_dis).reshape(1, -1)
-
-d_min = np.min(np.sum(c[1:], axis=1))
-
-
-h = p_mat[:, :col]
-
-hp = np.hstack((np.eye(n-k, dtype=int), h.T))
-
-ht = hp.T
-
-print("\n")
-print("The Generator Matrix is : ")
-
-for r in g_mat:
-    print(" ".join(map(str, r)))
-
-
-print("\n")
-print("Message Bits\tCodeword\tHamming Weight")
-
-code_word = np.hstack((m, c, h_mat.T))
-
-for r in range(code_word.shape[0]):
-
-    format_row = (
-        " ".join(map(str, code_word[r, :k]))
-        + "\t\t"
-        + " ".join(map(str, code_word[r, k:n+k]))
-        + "\t\t"
-        + str(code_word[r, -1])
-    )
-
-    print(format_row)
-
-
-print("\n")
-print(f"Minimum Hamming Distance : {d_min}")
-
-s = d_min - 1
-
-print("\nError Detection Capability")
-print(f"dmin >= s + 1")
-print(f"{d_min} >= s + 1")
-print(f"s <= {s}")
-
-
-t = (d_min - 1) // 2
-
-print("\nError Correction Capability")
-print(f"dmin >= 2t + 1")
-print(f"{d_min} >= 2({t}) + 1")
-print(f"t = {t}")
-
-print("\n")
-print("Parity Check Matrix")
-
-for r in hp:
-    print(" ".join(map(str, r)))
-
-
-print("\n")
-print("Parity Check Matrix Transpose")
-
-for r in ht:
-    print(" ".join(map(str, r)))
-
-
-rc = list(map(int,
-input("\nEnter the error codeword : ").split()))
-
-r_code.append(rc)
-
-r_c = np.array(r_code)
-
-e = np.mod(np.dot(r_c, ht), 2)
-
-print("\n")
-print("Syndrome of given received codeword is : "
-      + " ".join(map(str, e[0])))
-
-print("\n")
-print("Syndrome Matrix")
+# Syndrome Table
+print("\nError Pattern   Syndrome")
 
 for i in range(n):
+    e=[0]*n
+    e[i]=1
 
-    combined_row = np.concatenate(
-        (ht[i, :], np.eye(n, dtype=int)[i, :])
-    )
+    s=np.mod(np.dot(H,np.array(e).T),2)
 
-    formatted_row = (
-        " ".join(map(str, combined_row[:col]))
-        + "\t"
-        + " ".join(map(str, combined_row[col:]))
-    )
+    print(*e,"   ",*s)
 
-    print(formatted_row)
+# Error Detection
+r=np.array(list(map(int,input("\nEnter Received Codeword : ").split())))
 
-for i in range(n):
+s=np.mod(np.dot(H,r.T),2)
 
-    if np.array_equal(e[0], ht[i, :]):
+print("Syndrome :",*s)
 
-        err = np.eye(n, dtype=int)[i, :]
+if np.all(s==0):
+    print("No Error")
+    print("Correct Codeword :",*r)
 
-print("\nThe error position is : "
-      + " ".join(map(str, err.astype(int))))
+else:
+    print("Error Detected")
 
-correct = np.mod(err + rc, 2)
+    error_pos=-1
 
-print("\nThe correct codeword is : "
-      + " ".join(map(str, correct.astype(int))))
-      
-      <img width="472" height="807" alt="595166832-2754d9f2-51f0-4447-a6ec-1c9027906036" src="https://github.com/user-attachments/assets/d7f37189-39c6-4676-9f52-0b1b442f69ea" />
+    for i in range(n): 
+        if np.array_equal(H[:,i],s):
+            error_pos=i
+            break
 
+    if error_pos!=-1:
+        print("Error Position :",error_pos+1)
+
+        r[error_pos]=(r[error_pos]+1)%2
+
+        print("Correct Codeword :",*r)
+
+        
 # Output Waveform
 
 
